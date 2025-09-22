@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>JIoGamesAssistant</title>
+  <style>
+    :root {
+      --bg-color: #1e1e2f;
+      --container-bg: #2b2b40;
+      --text-color: #ffffff;
+      --placeholder-color: #aaaaaa;
+      --input-bg: #1a1a2e;
+      --answer-bg: #1a1a2e;
+      --highlight-color: #2ee9f0;
+      --button-bg: #00d2ff;
+      --button-hover: #1ae5e5;
+      --chat-user-bg: #3a3a5a;
+      --chat-ai-bg: #1f1f3d;
+    }
+
+    body.light {
+      --bg-color: #f4f4f4;
+      --container-bg: #ffffff;
+      --text-color: #000000;
+      --placeholder-color: #777777;
+      --input-bg: #eeeeee;
+      --answer-bg: #f0f0f0;
+      --highlight-color: #0077cc;
+      --button-bg: #00aaff;
+      --button-hover: #33bbff;
+      --chat-user-bg: #d1eaff;
+      --chat-ai-bg: #e1e1f1;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      transition: background-color 0.4s ease;
+    }
+
+    .container {
+      background-color: var(--container-bg);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+      width: 100%;
+      max-width: 800px;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--highlight-color);
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      color: var(--highlight-color);
+      margin-bottom: 10px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      font-size: 16px;
+    }
+
+    input::placeholder {
+      color: var(--placeholder-color);
+    }
+
+    button {
+      background-color: var(--button-bg);
+      color: #000;
+      padding: 10px 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-bottom: 15px;
+      margin-right: 5px;
+    }
+
+    button:hover {
+      background-color: var(--button-hover);
+    }
+
+    .toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+      background-color: transparent;
+      color: var(--highlight-color);
+      border: 1px solid var(--highlight-color);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .toggle:hover {
+      background-color: var(--highlight-color);
+      color: #000;
+    }
+
+    #chatBox {
+      background-color: var(--answer-bg);
+      border-radius: 6px;
+      padding: 20px;
+      min-height: 200px;
+      max-height: 500px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      background-color: var(--chat-user-bg);
+      text-align: right;
+    }
+
+    .ai {
+      background-color: var(--chat-ai-bg);
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
+    <h1>🎮 JioGames QA Assistant</h1>
+    <h2>❓ Ask Query</h2>
+    <input type="text" id="questionInput" placeholder="e.g. What is Jio games?" />
+    <button onclick="ask()">Submit</button>
+    <button onclick="clearChat()">Clear</button> <!-- ✅ New Clear Button -->
+    <div id="chatBox">
+      <div class="message ai">AI response will appear here...</div>
+    </div>
+  </div>
+
+  <script>
+    let isLight = false;
+
+    function toggleTheme() {
+      isLight = !isLight;
+      document.body.classList.toggle("light", isLight);
+    }
+
+    async function ask() {
+      const question = document.getElementById("questionInput").value.trim();
+      if (!question) {
+        addMessage("⚠️ Please enter a question!", "ai");
+        return;
+      }
+
+      addMessage(question, "user");
+      addMessage("⏳ Thinking...", "ai");
+
+      try {
+        const response = await fetch("http://localhost:3000/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await response.json();
+        removeLastMessage("ai");
+        addMessage(data.answer || "❌ No answer found.", "ai");
+      } catch (err) {
+        removeLastMessage("ai");
+        addMessage("🚫 Error connecting to backend.", "ai");
+        console.error(err);
+      }
+
+      document.getElementById("questionInput").value = "";
+    }
+
+    function addMessage(text, type) {
+      const msg = document.createElement("div");
+      msg.className = `message ${type}`;
+      msg.textContent = text;
+      const chatBox = document.getElementById("chatBox");
+      chatBox.insertBefore(msg, chatBox.firstChild);
+    }
+
+    function removeLastMessage(type) {
+      const chatBox = document.getElementById("chatBox");
+      const messages = chatBox.getElementsByClassName(type);
+      if (messages.length > 0) {
+        chatBox.removeChild(messages[0]);
+      }
+    }
+
+    // ✅ Clear chat and restore placeholder
+    function clearChat() {
+      const chatBox = document.getElementById("chatBox");
+      chatBox.innerHTML = '<div class="message ai">AI response will appear here...</div>';
+    }
+  </script>
+</body>
+</html>

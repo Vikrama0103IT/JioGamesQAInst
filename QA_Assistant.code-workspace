@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "QA_Assistant",
+			"path": "."
+		},
+		{
+			"name": "pdf_docs",
+			"path": "../../../Downloads/pdf_docs"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "QA_Assistant",
+		"liveServer.settings.port": 5501
+	}
+}
